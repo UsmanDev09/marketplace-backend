@@ -1,12 +1,19 @@
 
 import { Request, Response } from "express"
 
-const router = require('express').Router()
-const passport = require('passport')
-const User = require('../controllers/user')
-const passportSetup = require('../auth/passport')
+import express from 'express'
+import passport from 'passport'
+import * as Product from '../controllers/product'
+// import passportSetup from '../auth/passport'
 
+const router = express.Router()
 
+router.get('/category/:categoryId', Product.getAllProducts )
 
+router.post('/category/:categoryId', Product.createProduct )
+
+router.put('/category/:categoryId', Product.updateProduct )
+
+router.delete('/category/:categoryId', Product.deleteProduct )
 
 export default router
