@@ -3,20 +3,20 @@ import bcrypt from 'bcrypt'
 import createHttpError from 'http-errors'
 import User from '../models/user'
 import jwt from 'jsonwebtoken'
-// import env from '../utils/validateEnv'
+import env from '../utils/validateEnv'
 import nodemailer from'nodemailer'
 import SMTPTransport from "nodemailer/lib/smtp-transport"
 
 type UserBody = {
     _id: number,
     name: string,
-    email: string, 
+    email: string,
     password: string,
-    role: string, 
+    role: string,
 }
 
 let transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.email',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false,
     auth: {
@@ -26,26 +26,26 @@ let transporter = nodemailer.createTransport({
 } as SMTPTransport.Options)
 
 export const login: RequestHandler<unknown, unknown, UserBody, unknown> = async (req, res, next) => {
-   const { name, email, password, role } = req?.body 
+   const { name, email, password, role } = req?.body
 
-   try { 
-        if (!(name || email || password || role)) 
+   try {
+        if (!(name || email || password || role))
             throw createHttpError(400, "Please add missing fields")
 
         const user = await User.findOne({
             name, email
         })
-        
+
         // error for security reasons
         if(!user)
-            throw createHttpError(404, "Invalid Credenials") 
+            throw createHttpError(404, "Invalid Credenials")
 
         const verifyCredentials = await bcrypt.compare(password, user.password)
 
         if (!verifyCredentials)
             throw createHttpError(400, "Invalid Credentials")
 
-        const token = jwt.sign({ user }, 'YnXbD3QJYYn4clE2OAiYCjV8/8JDet6VAQOhPwjWIFO0ba9EaH/f0Uj+g5ZTGpngylKfhnaelDstyrQP', {
+        const token = jwt.sign({ user }, env.JWT_SECRET_KEY, {
             expiresIn: '1d'
         })
 
@@ -64,30 +64,36 @@ export const register: RequestHandler = async (req, res, next) => {
 
         if(!(name || email || password || role))
             throw createHttpError(400, "Please add missing fields")
-        
-        const existingUser = await User.find({ email })
 
-        if(existingUser) 
+        const existingUser = await User.findOne({ email })
+
+        if(existingUser)
             throw createHttpError(400, "User already exists")
 
         const hashedPassword = await bcrypt.hash(req.body.password, 10)
 
-        const newUser = await User.create({
-            name, email, role, hashedPassword
+
+        const newUser = await new User({
+           name: name,
+           email: email,
+           password: hashedPassword,
         })
 
-        let sendEmail = await transporter.sendMail({
-            from: 'usman.siddique@devsinc.com',
-            to: email,
-            subject: 'Thankyou for registering with us',
-            text: 'You are registered',
-            html: '<p> :) </p>'
-        })
+        await newUser.save()
+
+        // let sendEmail = await transporter.sendMail({
+        //     from: 'usman.siddique@devsinc.com',
+        //     to: email,
+        //     subject: 'Thankyou for registering with us',
+        //     text: 'You are registered',
+        //     html: '<p> :) </p>'
+        // })
 
         res.status(201).json(newUser)
 
-    } catch(error){ 
+    } catch(error){
+        console.log(error)
         next(error)
-    } 
+    }
 }
 

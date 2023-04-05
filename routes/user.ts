@@ -2,11 +2,13 @@ import { Request, Response } from "express"
 
 import express from 'express'
 import passport from 'passport'
-import * as UserController from '../controllers/user'
+import * as User from '../controllers/user'
 
 const router = express.Router()
 
-router.get('/login', UserController.login)
+router.get('/login', User.login)
+
+router.get('/register', User.register)
 
 router.get('/google', passport.authenticate('google', {
     scope: ['profile']
