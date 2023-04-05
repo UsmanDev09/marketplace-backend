@@ -14,25 +14,24 @@ const server = () => {
     app.use(express.urlencoded( { extended: false} ))
     // app.use(whitelistRequestBodyParams)
     app.use('/api/users',  userRoutes)
-    
+
     app.use('/api/products', passport.authenticate('jwt', { session: false }), productsRoutes)
 
-    app.use('api/category', passport.authenticate('jwt', {session: false}), categoriesRoutes)
+    app.use('/api/category', passport.authenticate('jwt', {session: false}), categoriesRoutes)
     // no endpoint
     app.use((req, res, next) => {
-        next(createHttpError(404, "Endpoint not found"))
+        next(createHttpError(404, "Route not found"))
     })
-    
+
     // error handler
     app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
         let errorMessage = 'An unknown error occured.'
         let statusCode = 500
-
         if (isHttpError(error)){
             errorMessage = error.message
             statusCode = error.status
         }
-        res.status(statusCode).json( { error: errorMessage } )
+        res.status(statusCode).json( { error: error } )
     })
     return app
 }
